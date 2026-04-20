@@ -21,7 +21,7 @@ function AiChatPage() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hello, I can help debug API failures, optimize latency, and suggest test strategies.',
+      content: 'Hello, I can help explain failed requests, suggest fixes, and improve your test coverage.',
     },
   ]);
 
@@ -129,25 +129,25 @@ function AiChatPage() {
   };
 
   if (loading) {
-    return <LoadingState text="Loading AI chat context..." />;
+    return <LoadingState text="Loading AI chat..." />;
   }
 
   return (
-    <Card title="AI Developer Assistant" subtitle="Ask debugging and optimization questions in natural language">
+    <Card title="AI Assistant" subtitle="Ask questions about failed requests and next steps">
       {!apiRequests.length ? (
         <EmptyState
           title="No API requests linked"
-          description="You can still chat without context, or create API requests for better AI answers."
+          description="You can still chat now, or create requests first for better answers."
         />
       ) : (
         <div className="mb-3">
-          <label className="field-label">API Request Context (Optional)</label>
+          <label className="field-label">Request Context (Optional)</label>
           <select
             className="field-input"
             value={selectedApiRequestId}
             onChange={(event) => setSelectedApiRequestId(event.target.value)}
           >
-            <option value="">No context</option>
+            <option value="">No request selected</option>
             {apiRequests.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name} ({item.httpMethod})
@@ -187,7 +187,7 @@ function AiChatPage() {
       <div className="flex gap-2">
         <textarea
           className="field-input min-h-[72px]"
-          placeholder="Ask AI about a failing API or optimization approach..."
+          placeholder="Ask AI what went wrong and how to fix it..."
           value={input}
           onChange={onInputChange}
           onKeyDown={onInputKeyDown}

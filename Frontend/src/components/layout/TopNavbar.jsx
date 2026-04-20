@@ -21,13 +21,13 @@ function TopNavbar() {
           Menu
         </button>
         <div>
-          <h2 className="text-base font-semibold text-slate-800">Developer Console</h2>
-          <p className="text-xs text-slate-500">AI-powered API testing and diagnostics</p>
+          <h2 className="text-base font-semibold text-slate-800">API Testing Hub</h2>
+          <p className="text-xs text-slate-500">Create requests, run tests, and fix issues faster</p>
         </div>
         <div className="ml-auto flex items-center gap-3">
           <p className="hidden text-sm text-slate-600 md:block">{user?.name || user?.email}</p>
           <Button variant="secondary" onClick={signOut} className="px-3 py-1.5 text-xs">
-            Logout
+            Sign out
           </Button>
         </div>
       </div>

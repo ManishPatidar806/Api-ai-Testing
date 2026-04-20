@@ -873,7 +873,7 @@ function SecurityTestingPage() {
   };
 
   if (loading) {
-    return <LoadingState text="Loading security testing setup..." />;
+    return <LoadingState text="Loading security checks..." />;
   }
 
   if (!apiRequests.length) {
@@ -881,11 +881,11 @@ function SecurityTestingPage() {
       <div>
         <EmptyState
           title="No API requests found"
-          description="Create an API request in Workspace first, then configure security tests."
+          description="Create a request first, then run security checks."
         />
         <div className="mt-3 flex justify-center">
           <Button onClick={() => navigate('/workspace', { state: { returnTo: '/security-testing', waitForFirstRequest: true } })}>
-            Go To API Workspace
+            Go to Request Builder
           </Button>
         </div>
       </div>
@@ -904,7 +904,7 @@ function SecurityTestingPage() {
       />
       <ToastMessage type="info" text={providerWarning} onClose={() => setProviderWarning('')} />
 
-      <Card title="Brute Force Attack Test" subtitle="Create and execute a ready security test case for endpoint lockout/rate-limit behavior">
+      <Card title="Repeated Attempt Test" subtitle="Check if your API blocks too many repeated requests">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="md:col-span-2 xl:col-span-3">
             <label className="field-label">API Request</label>
@@ -982,16 +982,16 @@ function SecurityTestingPage() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="danger" onClick={createBruteForceCase} disabled={actionLoading}>
-            {actionLoading ? 'Working...' : 'Create Brute Force Test'}
+            {actionLoading ? 'Working...' : 'Create repeated attempt test'}
           </Button>
           <Button variant="success" onClick={runLastCreatedCase} disabled={actionLoading || !lastCreatedCaseId}>
-            {actionLoading ? 'Running...' : 'Run Last Created Test'}
+            {actionLoading ? 'Running...' : 'Run latest test'}
           </Button>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
           <div>
-            <label className="field-label">Run Particular Brute-Force Test Case</label>
+            <label className="field-label">Run a Saved Repeated Attempt Test</label>
             <select
               className="field-input"
               value={selectedBruteForceCaseId}
@@ -1012,13 +1012,13 @@ function SecurityTestingPage() {
               disabled={actionLoading || !selectedBruteForceCaseId}
               onClick={() => runParticularBruteForceCase(Number(selectedBruteForceCaseId))}
             >
-              Run Selected Brute Force
+              Run Selected Test
             </Button>
           </div>
         </div>
       </Card>
 
-      <Card title="Brute Force Result" subtitle="Latest brute-force execution status and recent history">
+      <Card title="Repeated Attempt Result" subtitle="Latest result and recent history">
         {lastBruteForceRun ? (
           <div className="space-y-3">
             {(() => {
@@ -1084,7 +1084,7 @@ function SecurityTestingPage() {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-slate-600">No brute-force execution found yet for this endpoint.</p>
+          <p className="text-sm text-slate-600">No repeated-attempt run found yet for this request.</p>
         )}
 
         {bruteForceCases.length ? (
@@ -1115,7 +1115,7 @@ function SecurityTestingPage() {
                         disabled={actionLoading}
                         onClick={() => runParticularBruteForceCase(item.id)}
                       >
-                        Run This Case
+                        Run test
                       </Button>
                     </td>
                   </tr>
@@ -1126,10 +1126,10 @@ function SecurityTestingPage() {
         ) : null}
       </Card>
 
-      <Card title="Attack Payload Templates" subtitle="Use these payloads in API Workspace to validate input handling and sanitization">
+      <Card title="Input Safety Templates" subtitle="Use these samples to check how your API handles risky input">
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
           <div>
-          <label className="field-label">Attack Target API Request</label>
+          <label className="field-label">Target Request</label>
           <select
             className="field-input"
             value={attackApiRequestId}
@@ -1145,7 +1145,7 @@ function SecurityTestingPage() {
           </div>
           <div className="flex items-end">
             <Button variant="accent" disabled={actionLoading || generatingTemplates} onClick={generateAiAttackTemplates}>
-              {generatingTemplates ? 'Generating...' : 'Generate Templates Using AI'}
+              {generatingTemplates ? 'Generating...' : 'Generate with AI'}
             </Button>
           </div>
         </div>
@@ -1158,7 +1158,7 @@ function SecurityTestingPage() {
                 checked={templateState.autoDetectParams}
                 onChange={(event) => setTemplateState((prev) => ({ ...prev, autoDetectParams: event.target.checked }))}
               />
-              Auto-detect endpoint parameters from URL/body (fallback to manual fields if none found)
+              Auto-detect fields from URL/body (or use manual fields below)
             </label>
             <p className="mt-1 text-xs text-slate-500">
               Detected query/path params: {attackTargets.detectedQueryParams.length || attackTargets.detectedPathParams.length
@@ -1229,7 +1229,7 @@ function SecurityTestingPage() {
         </div>
 
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-semibold text-slate-700">Execute SQL Injection Against Endpoint</p>
+          <p className="text-sm font-semibold text-slate-700">Run SQL-like Input Checks</p>
           <div className="mt-2 flex flex-wrap gap-4">
             <label className="inline-flex items-center gap-2 text-sm text-slate-700">
               <input
@@ -1237,7 +1237,7 @@ function SecurityTestingPage() {
                 checked={attackScope.query}
                 onChange={(event) => setAttackScope((prev) => ({ ...prev, query: event.target.checked }))}
               />
-              Inject in Query Params
+              Test URL query fields
             </label>
             <label className="inline-flex items-center gap-2 text-sm text-slate-700">
               <input
@@ -1245,12 +1245,12 @@ function SecurityTestingPage() {
                 checked={attackScope.body}
                 onChange={(event) => setAttackScope((prev) => ({ ...prev, body: event.target.checked }))}
               />
-              Inject in JSON Body
+              Test JSON body fields
             </label>
           </div>
           <div className="mt-3">
             <Button variant="danger" onClick={runSqliAttackSuite} disabled={runningSqliSuite || actionLoading}>
-              {runningSqliSuite ? 'Running SQLi Suite...' : 'Run SQLi Suite On Endpoint'}
+              {runningSqliSuite ? 'Running SQL Check...' : 'Run SQL Check'}
             </Button>
           </div>
         </div>
@@ -1289,10 +1289,10 @@ function SecurityTestingPage() {
         ) : null}
 
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-semibold text-slate-700">Execute XSS Attack Against Endpoint</p>
+          <p className="text-sm font-semibold text-slate-700">Run Script Injection Checks</p>
           <div className="mt-2">
             <Button variant="danger" onClick={runXssAttackSuite} disabled={runningXssSuite || actionLoading}>
-              {runningXssSuite ? 'Running XSS Suite...' : 'Run XSS Suite On Endpoint'}
+              {runningXssSuite ? 'Running Script Check...' : 'Run Script Check'}
             </Button>
           </div>
         </div>
@@ -1331,10 +1331,10 @@ function SecurityTestingPage() {
         ) : null}
 
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-semibold text-slate-700">Execute JSON Payload Suite Against Endpoint</p>
+          <p className="text-sm font-semibold text-slate-700">Run JSON Input Checks</p>
           <div className="mt-2">
             <Button variant="danger" onClick={runJsonAttackSuite} disabled={runningJsonSuite || actionLoading}>
-              {runningJsonSuite ? 'Running JSON Payload Suite...' : 'Run JSON Payload Suite On Endpoint'}
+              {runningJsonSuite ? 'Running JSON Check...' : 'Run JSON Check'}
             </Button>
           </div>
         </div>
@@ -1371,7 +1371,7 @@ function SecurityTestingPage() {
         ) : null}
 
         <p className="mt-3 text-xs text-slate-600">
-          Recommended assertions: status remains 4xx for invalid input, no stack trace leakage, and reflected payload fragments are absent from response body.
+          Recommended checks: return 4xx for invalid input, avoid stack-trace leaks, and do not echo unsafe input in responses.
         </p>
       </Card>
     </div>

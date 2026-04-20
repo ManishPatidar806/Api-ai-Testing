@@ -15,7 +15,8 @@ function AppRouter() {
       <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<Navigate to="/login" replace />} />
+          <Route path="/register" element={<LoginPage />} />
+          <Route path="/signup" element={<LoginPage />} />
         </Route>
 
         <Route

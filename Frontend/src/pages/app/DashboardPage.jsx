@@ -149,10 +149,10 @@ function DashboardPage() {
       <div>
         <EmptyState
           title="No API requests found"
-          description="Create and execute API requests in Workspace to see dashboard metrics."
+          description="Create and run a request first to see dashboard insights."
         />
         <div className="mt-3 flex justify-center">
-          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/', waitForFirstRequest: true } })}>Go To API Workspace</Button>
+          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/', waitForFirstRequest: true } })}>Go to Request Builder</Button>
         </div>
       </div>
     );
@@ -162,13 +162,13 @@ function DashboardPage() {
     <div className="space-y-6">
       <section>
         <h2 className="text-xl font-semibold text-slate-900">Dashboard</h2>
-        <p className="mt-1 text-sm text-slate-500">Overview of API requests, test health, and runtime quality.</p>
+        <p className="mt-1 text-sm text-slate-500">A quick summary of your requests, test results, and response speed.</p>
         <p className="mt-1 text-xs text-slate-500">Last synced: {formatSyncedAt(lastSyncedAt)}</p>
       </section>
 
-      <Card title="Select API Request" subtitle="Dashboard metrics are shown for the selected request">
+      <Card title="Select Request" subtitle="Show dashboard numbers for one request or all requests">
         <p className="mb-2 text-xs text-slate-500">
-          Tip: choose All Requests for portfolio-wide insights, or one request for endpoint-level diagnostics.
+          Tip: choose All Requests for the full picture, or select one request for details.
         </p>
         <select
           className="field-input"
@@ -195,10 +195,10 @@ function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card title="Execution Summary" subtitle="Success and failure overview">
+        <Card title="Run Summary" subtitle="Passed and failed runs">
           <MiniBarChart data={barData} />
         </Card>
-        <Card title="Latest Response Trend" subtitle="Recent response time trend for selected request">
+        <Card title="Recent Response Trend" subtitle="Response speed over recent runs">
           <TrendLineChart points={lineData.length ? lineData : [{ label: 'N/A', value: 0 }]} />
         </Card>
       </section>

@@ -55,11 +55,11 @@ function ApiWorkspacePage() {
 
   const workspaceSections = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'workspace', label: 'API Request Builder' },
-    { key: 'testcases', label: 'Manual Test Cases' },
-    { key: 'analyzer', label: 'AI Error Analyzer' },
+    { key: 'workspace', label: 'Request Builder' },
+    { key: 'testcases', label: 'Test Cases' },
+    { key: 'analyzer', label: 'Error Analyzer' },
     { key: 'chat', label: 'AI Chat' },
-    { key: 'security', label: 'Security Testing' },
+    { key: 'security', label: 'Security Checks' },
   ];
 
   useEffect(() => {
@@ -433,7 +433,7 @@ function ApiWorkspacePage() {
 
   return (
     <div className="space-y-4">
-      <Card title="Unified API Workspace" subtitle="Everything in one place: request builder, AI diagnostics, security, and analytics">
+      <Card title="Your API Workspace" subtitle="Create requests, run tests, and review results in one place">
         <div className="flex flex-wrap gap-2">
           {workspaceSections.map((section) => (
             <button
@@ -460,10 +460,10 @@ function ApiWorkspacePage() {
 
       {activeSection === 'workspace' ? (
         <>
-          <Card title="Saved Requests" subtitle="Select existing request or create a new one">
+          <Card title="Saved Requests" subtitle="Open a saved request or start a new one">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
               <div>
-                <label className="field-label">Saved API Request</label>
+                <label className="field-label">Saved Request</label>
                 <select
                   className="field-input"
                   value={selectedRequestId}
@@ -506,7 +506,7 @@ function ApiWorkspacePage() {
             {response ? (
               <ResponseViewer response={response} testResults={[]} />
             ) : (
-              <EmptyState title="No response yet" description="Run any request to inspect status, body, and execution details." />
+              <EmptyState title="No response yet" description="Send a request to view the status and response." />
             )}
           </div>
         </>

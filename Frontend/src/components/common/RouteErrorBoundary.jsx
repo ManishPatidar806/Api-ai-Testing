@@ -32,7 +32,7 @@ class RouteErrorBoundary extends Component {
             <Button variant="secondary" onClick={this.onRetry}>
               Retry
             </Button>
-            <Button onClick={() => window.location.assign('/workspace')}>Go To API Workspace</Button>
+            <Button onClick={() => window.location.assign('/workspace')}>Go to Request Builder</Button>
           </div>
         </div>
       );

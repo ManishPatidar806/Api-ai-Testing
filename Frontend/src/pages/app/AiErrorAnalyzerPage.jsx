@@ -249,7 +249,7 @@ function AiErrorAnalyzerPage() {
       ].join('\n');
       setResponseDetails(summary);
     } else {
-      setResponseDetails('No failed response summary found for this endpoint.');
+      setResponseDetails('No failed response summary found for this request.');
     }
     setLastSyncedAt(new Date().toISOString());
   }, [selectedApiRequestId, apiRequests]);
@@ -294,7 +294,7 @@ function AiErrorAnalyzerPage() {
   };
 
   if (loading) {
-    return <LoadingState text="Loading AI analyzer context..." />;
+    return <LoadingState text="Loading error analyzer..." />;
   }
 
   if (!apiRequests.length) {
@@ -302,10 +302,10 @@ function AiErrorAnalyzerPage() {
       <div>
         <EmptyState
           title="No failed API requests found"
-          description="Run API requests first and trigger at least one failed response to use AI Error Analyzer."
+          description="Run at least one request that fails to use AI Error Analyzer."
         />
         <div className="mt-3 flex justify-center">
-          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/ai-error-analyzer', waitForFirstRequest: true } })}>Go To API Workspace</Button>
+          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/ai-error-analyzer', waitForFirstRequest: true } })}>Go to Request Builder</Button>
         </div>
       </div>
     );
@@ -313,13 +313,13 @@ function AiErrorAnalyzerPage() {
 
   return (
     <div className="space-y-6">
-      <Card title="AI Error Analyzer" subtitle="Paste failed request and response details to get root-cause insights">
+      <Card title="AI Error Analyzer" subtitle="Review a failed request and get clear suggestions">
         <p className="mb-1 text-xs text-slate-500">Last synced: {formatSyncedAt(lastSyncedAt)}</p>
         <p className="mb-2 text-xs text-slate-500">
-          Tip: only endpoints with failed responses are listed here.
+          Tip: only requests with failures are listed here.
         </p>
         <div className="mb-4">
-          <label className="field-label">API Request</label>
+          <label className="field-label">Request</label>
           <select
             className="field-input"
             value={selectedApiRequestId}
@@ -358,7 +358,7 @@ function AiErrorAnalyzerPage() {
         {selectedRequestDetails ? (
           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
             <p>
-              <span className="font-semibold">Selected Endpoint:</span> {selectedRequestDetails.httpMethod} {selectedRequestDetails.url}
+              <span className="font-semibold">Selected URL:</span> {selectedRequestDetails.httpMethod} {selectedRequestDetails.url}
             </p>
             <p className="mt-1">
               <span className="font-semibold">Request Name:</span> {selectedRequestDetails.name}
@@ -369,7 +369,7 @@ function AiErrorAnalyzerPage() {
         <ToastMessage type="error" text={error} onClose={() => setError('')} />
         <ToastMessage type="info" text={providerWarning} onClose={() => setProviderWarning('')} />
         <Button variant="danger" className="mt-4" onClick={runAnalysis} disabled={analyzing}>
-          {analyzing ? 'Analyzing...' : 'Analyze Failure'}
+          {analyzing ? 'Analyzing...' : 'Get AI Help'}
         </Button>
       </Card>
 

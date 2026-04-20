@@ -300,9 +300,9 @@ function TestCasesPage() {
   if (!apiRequests.length) {
     return (
       <div>
-        <EmptyState title="No API requests found" description="Create and save an API request in Workspace first, then create test cases." />
+        <EmptyState title="No API requests found" description="Create and save a request first, then create test cases." />
         <div className="mt-3 flex justify-center">
-          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/test-cases', waitForFirstRequest: true } })}>Go To API Workspace</Button>
+          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/test-cases', waitForFirstRequest: true } })}>Go to Request Builder</Button>
         </div>
       </div>
     );
@@ -319,10 +319,10 @@ function TestCasesPage() {
         }}
       />
 
-      <Card title="Select API Request" subtitle="Test cases are linked to one API request">
+      <Card title="Select Request" subtitle="Test cases are linked to one request">
         <p className="mb-1 text-xs text-slate-500">Last synced: {formatSyncedAt(lastSyncedAt)}</p>
         <p className="mb-2 text-xs text-slate-500">
-          Tip: keep one smoke test + one failure-path test per endpoint for reliable coverage.
+          Tip: keep one simple success test and one failure test for each request.
         </p>
         <select
           className="field-input"
@@ -338,7 +338,7 @@ function TestCasesPage() {
         </select>
       </Card>
 
-      <Card title="Create Test Case" subtitle="Define validation rules for endpoint behavior">
+      <Card title="Create Test Case" subtitle="Set the checks this request should pass">
         <form onSubmit={createTestCase} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <InputField
             label="Test Name"
@@ -437,7 +437,7 @@ function TestCasesPage() {
               onChange={(event) => setForm((prev) => ({ ...prev, testMode: event.target.value }))}
             >
               <option value="FUNCTIONAL">Functional</option>
-              <option value="BRUTE_FORCE">Brute Force Attack</option>
+              <option value="BRUTE_FORCE">Repeated attempts</option>
             </select>
           </div>
           {form.testMode === 'BRUTE_FORCE' ? (
@@ -474,7 +474,7 @@ function TestCasesPage() {
           ) : null}
           <div className="flex items-end gap-2">
             <Button type="submit" variant="accent" className="w-full" disabled={actionLoading}>
-              {actionLoading ? 'Processing...' : 'Add Test Case'}
+              {actionLoading ? 'Processing...' : 'Create test case'}
             </Button>
           </div>
         </form>
@@ -484,9 +484,9 @@ function TestCasesPage() {
       </Card>
 
       <Card
-        title="Test Case Library"
-        subtitle="Run single or bulk test suites"
-        action={<Button variant="success" onClick={runAll} disabled={actionLoading}>{actionLoading ? 'Running...' : 'Run All Tests'}</Button>}
+        title="Test case library"
+        subtitle="Run one test or all tests"
+        action={<Button variant="success" onClick={runAll} disabled={actionLoading}>{actionLoading ? 'Running...' : 'Run all tests'}</Button>}
       >
         <DataTable columns={columns} rows={testCases} emptyMessage="No test cases configured yet." />
       </Card>

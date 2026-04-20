@@ -7,11 +7,11 @@ function AuthLayout() {
         <div>
           <p className="text-xs uppercase tracking-widest text-slate-300">AI Platform</p>
           <h1 className="mt-3 max-w-sm text-3xl font-semibold leading-tight">
-            Test, diagnose, and optimize APIs with confidence.
+            Test and monitor your APIs with confidence.
           </h1>
         </div>
         <p className="max-w-md text-sm text-slate-300">
-          A practical developer-focused workspace to send requests, run tests, and get AI-powered root-cause analysis in seconds.
+          Send requests, run automated tests, and get clear AI-powered error insights in one easy workspace.
         </p>
       </section>
 
