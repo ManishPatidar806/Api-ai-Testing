@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border: #dbe2ea;
+  --text: #1c2735;
+  --text-muted: #64748b;
+  --primary: #0f172a;
+  --primary-soft: #334155;
+  --success: #0f766e;
+  --danger: #be123c;
+  --warning: #b45309;
+  --info: #1d4ed8;
+  --shadow-soft: 0 4px 18px rgba(15, 23, 42, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 4% 0%, #e7efff 0%, var(--bg) 38%, #f8fafc 100%);
+}
+
+code,
+pre,
+textarea.json {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-xl border border-slate-200 bg-white;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .status-chip-success {
+    @apply rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700;
+  }
+
+  .status-chip-danger {
+    @apply rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700;
+  }
+
+  .status-chip-pending {
+    @apply rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700;
+  }
+
+  .field-label {
+    @apply mb-1 block text-sm font-medium text-slate-700;
+  }
+
+  .field-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-slate-800;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-slate-500;
+  }
+}
