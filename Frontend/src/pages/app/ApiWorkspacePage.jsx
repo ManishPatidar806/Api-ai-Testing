@@ -9,7 +9,7 @@ import LoadingState from '../../components/common/LoadingState';
 import ToastMessage from '../../components/common/ToastMessage';
 import { apiRequestService } from '../../services/apiRequestService';
 
-const DashboardPage = lazy(() => import('./DashboardPage'));
+const PerformancePage = lazy(() => import('./DashboardPage'));
 const TestCasesPage = lazy(() => import('./TestCasesPage'));
 const AiErrorAnalyzerPage = lazy(() => import('./AiErrorAnalyzerPage'));
 const AiChatPage = lazy(() => import('./AiChatPage'));
@@ -41,7 +41,9 @@ function ApiWorkspacePage() {
   const location = useLocation();
   const returnTo = location.state?.returnTo;
   const waitForFirstRequest = Boolean(location.state?.waitForFirstRequest);
-  const [activeSection, setActiveSection] = useState(location.state?.workspaceSection || 'workspace');
+  const [activeSection, setActiveSection] = useState(
+    location.state?.workspaceSection === 'dashboard' ? 'performance' : (location.state?.workspaceSection || 'workspace'),
+  );
 
   const [request, setRequest] = useState(initialRequest);
   const [savedRequests, setSavedRequests] = useState([]);
@@ -49,22 +51,24 @@ function ApiWorkspacePage() {
   const [response, setResponse] = useState(null);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isFirstExecutionAttempt, setIsFirstExecutionAttempt] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [hadRequestsOnLoad, setHadRequestsOnLoad] = useState(false);
 
   const workspaceSections = [
-    { key: 'dashboard', label: 'Dashboard' },
     { key: 'workspace', label: 'Request Builder' },
     { key: 'testcases', label: 'Test Cases' },
     { key: 'analyzer', label: 'Error Analyzer' },
     { key: 'chat', label: 'AI Chat' },
     { key: 'security', label: 'Security Checks' },
+    { key: 'performance', label: 'Performance' },
   ];
 
   useEffect(() => {
     if (location.state?.workspaceSection) {
-      setActiveSection(location.state.workspaceSection);
+      const nextSection = location.state.workspaceSection === 'dashboard' ? 'performance' : location.state.workspaceSection;
+      setActiveSection(nextSection);
     }
   }, [location.state]);
 
@@ -416,6 +420,7 @@ function ApiWorkspacePage() {
       setError(sendError.message || 'Request execution failed');
     } finally {
       setSending(false);
+      setIsFirstExecutionAttempt(false);
     }
   };
 
@@ -428,7 +433,7 @@ function ApiWorkspacePage() {
   };
 
   if (loadingRequests) {
-    return <LoadingState text="Loading API requests..." />;
+    return <LoadingState text="Backend is starting up on Render" />;
   }
 
   return (
@@ -452,9 +457,9 @@ function ApiWorkspacePage() {
         </div>
       </Card>
 
-      {activeSection === 'dashboard' ? (
-        <Suspense fallback={<LoadingState text="Loading dashboard..." />}>
-          <DashboardPage />
+      {activeSection === 'performance' ? (
+        <Suspense fallback={<LoadingState text="Loading performance insights..." />}>
+          <PerformancePage />
         </Suspense>
       ) : null}
 
@@ -501,6 +506,7 @@ function ApiWorkspacePage() {
               setRequest={setRequest}
               onSend={onSend}
               sending={sending}
+              sendingNote={sending && isFirstExecutionAttempt ? 'Backend is warming up on Render. Please wait up to 2-3 minutes for the first request.' : ''}
               disabled={sending}
             />
             {response ? (

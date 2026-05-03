@@ -28,13 +28,13 @@ function AppRouter() {
             </PrivateRoute>
           }
         >
-          <Route path="/" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'dashboard' }} />} />
+          <Route path="/" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'workspace' }} />} />
           <Route path="/workspace" element={<ApiWorkspacePage />} />
           <Route path="/test-cases" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'testcases' }} />} />
           <Route path="/ai-error-analyzer" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'analyzer' }} />} />
           <Route path="/ai-chat" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'chat' }} />} />
           <Route path="/security-testing" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'security' }} />} />
-          <Route path="/performance" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'dashboard' }} />} />
+          <Route path="/performance" element={<Navigate to="/workspace" replace state={{ workspaceSection: 'performance' }} />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

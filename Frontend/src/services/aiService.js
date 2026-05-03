@@ -26,14 +26,6 @@ export const aiService = {
     };
   },
 
-  async generateTestCases(payload) {
-    const response = await apiClient.post('/ai/test-case-generator', payload);
-    return {
-      testCases: Array.isArray(response.data?.testCases) ? response.data.testCases : [],
-      rawModelResponse: response.data?.rawModelResponse || '',
-    };
-  },
-
   async chat(payload) {
     const response = await apiClient.post('/ai/chat', payload);
     return response.data;

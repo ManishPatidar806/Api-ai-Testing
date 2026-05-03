@@ -30,10 +30,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class AiService {
+
+    private static final String DEFAULT_ROOT_CAUSE = "Unable to determine exact root cause.";
+    private static final String DEFAULT_FIX_SUGGESTION = "Validate endpoint, payload, auth, and upstream dependency state.";
+    private static final String DEFAULT_OPTIMIZATION = "Use tighter timeouts, retries, and structured logging for diagnostics.";
+    private static final List<String> VALID_TEST_CASE_CATEGORIES = List.of("SUCCESS", "FAILURE", "EDGE");
 
     private final AiClient aiClient;
     private final UserRepository userRepository;
@@ -77,17 +81,17 @@ public class AiService {
         Map<String, String> structured = parseAnalysisJson(modelResponse);
         if (structured != null) {
             return new AiErrorAnalysisResponse(
-                structured.getOrDefault("rootCause", "Unable to determine exact root cause."),
-                structured.getOrDefault("fixSuggestion", "Validate endpoint, payload, auth, and upstream dependency state."),
-                structured.getOrDefault("optimizationRecommendation", "Use tighter timeouts, retries, and structured logging for diagnostics."),
+                structured.getOrDefault("rootCause", DEFAULT_ROOT_CAUSE),
+                structured.getOrDefault("fixSuggestion", DEFAULT_FIX_SUGGESTION),
+                structured.getOrDefault("optimizationRecommendation", DEFAULT_OPTIMIZATION),
                 modelResponse
             );
         }
 
         return new AiErrorAnalysisResponse(
-                extractSection(modelResponse, "ROOT_CAUSE", "Unable to determine exact root cause."),
-                extractSection(modelResponse, "FIX", "Validate endpoint, payload, auth, and upstream dependency state."),
-                extractSection(modelResponse, "OPTIMIZATION", "Use tighter timeouts, retries, and structured logging for diagnostics."),
+                extractSection(modelResponse, "ROOT_CAUSE", DEFAULT_ROOT_CAUSE),
+                extractSection(modelResponse, "FIX", DEFAULT_FIX_SUGGESTION),
+                extractSection(modelResponse, "OPTIMIZATION", DEFAULT_OPTIMIZATION),
                 modelResponse
         );
     }
@@ -95,30 +99,7 @@ public class AiService {
     @Cacheable(value = "aiTestGeneration", key = "#email + ':' + #request.apiRequestId + ':' + #request.endpointUrl + ':' + #request.endpointMethod + ':' + #request.requestBodyTemplate + ':' + #request.requestHeadersTemplate + ':' + #request.queryParamsTemplate + ':' + #request.authRequirements + ':' + #request.successCriteria + ':' + #request.failureCriteria + ':' + #request.requiredResponseFields + ':' + #request.forbiddenResponseFields + ':' + #request.requiredJsonPaths + ':' + #request.expectedJsonPathValues + ':' + #request.forbiddenJsonPathValues + ':' + #request.stableResponseKeywords + ':' + #request.enforceKeywordAssertion + ':' + #request.additionalContext + ':' + #request.strictMode")
     @Transactional(readOnly = true)
     public AiTestCaseGeneratorResponse generateTestCases(String email, AiTestCaseGeneratorRequest request) {
-        String endpointUrl;
-        HttpMethodType endpointMethod;
-        String requestBodyTemplate;
-        String headers;
-        ApiResponse latest = null;
-
-        if (request.apiRequestId() != null) {
-            User user = getUserByEmail(email);
-            ApiRequest apiRequest = getOwnedRequest(user.getId(), request.apiRequestId());
-            latest = apiResponseRepository.findTopByApiRequestIdAndApiRequestUserIdOrderByExecutedAtDesc(apiRequest.getId(), user.getId())
-                    .orElse(null);
-            endpointUrl = apiRequest.getUrl();
-            endpointMethod = apiRequest.getHttpMethod();
-            requestBodyTemplate = apiRequest.getRequestBody();
-            headers = String.valueOf(apiRequest.getHeaders());
-        } else {
-            if (!StringUtils.hasText(request.endpointUrl()) || request.endpointMethod() == null) {
-                throw new IllegalArgumentException("Provide either apiRequestId or both endpointUrl and endpointMethod for AI test generation.");
-            }
-            endpointUrl = request.endpointUrl().trim();
-            endpointMethod = request.endpointMethod();
-            requestBodyTemplate = request.requestBodyTemplate();
-            headers = "{}";
-        }
+        TestGenerationSource source = resolveTestGenerationSource(email, request);
 
         boolean strictMode = Boolean.TRUE.equals(request.strictMode());
 
@@ -149,30 +130,75 @@ public class AiService {
                                 Generate 6 concrete test cases using endpoint path, method, params, and request-body fields.
                                 expectedKeyword is OPTIONAL and should be null unless a stable deterministic response token is explicitly provided.
                 """),
-                            new UserMessage(buildEndpointSpecificTestPrompt(endpointUrl, endpointMethod, headers, requestBodyTemplate, latest, request))
+                            new UserMessage(buildEndpointSpecificTestPrompt(
+                                source.endpointUrl(),
+                                source.endpointMethod(),
+                                source.headers(),
+                                source.requestBodyTemplate(),
+                                source.latest(),
+                                request
+                            ))
         ));
 
         String modelResponse = aiClient.generate(prompt.getContents());
-                List<AiGeneratedTestCase> generated = parseGeneratedTestCasesFromJson(modelResponse);
-
-                if (generated.isEmpty()) {
-                        String retryPrompt = "Reformat the following content into ONLY valid JSON with key testCases and required fields."
-                                        + " Keep endpoint specificity and do not add markdown:\n" + modelResponse;
-                        String retryResponse = aiClient.generate(retryPrompt);
-                        generated = parseGeneratedTestCasesFromJson(retryResponse);
-                        modelResponse = modelResponse + "\n\nRETRY_RESPONSE:\n" + retryResponse;
-                }
+        ParsedGeneration parsedGeneration = parseOrRetryGeneratedCases(modelResponse);
+        List<AiGeneratedTestCase> generated = parsedGeneration.generatedCases();
+        modelResponse = parsedGeneration.rawModelResponse();
 
         if (generated.isEmpty()) {
             if (strictMode) {
                 throw new IllegalArgumentException("Strict mode enabled: AI output was not valid JSON testCases format. Refine context and retry.");
             }
-            generated = buildDeterministicFallbackCases(endpointMethod + " " + endpointUrl, requestBodyTemplate);
+            generated = buildDeterministicFallbackCases(
+                source.endpointMethod() + " " + source.endpointUrl(),
+                source.requestBodyTemplate()
+            );
         }
 
         generated = applyKeywordAssertionPolicy(generated, request);
 
         return new AiTestCaseGeneratorResponse(generated, modelResponse);
+    }
+
+    private TestGenerationSource resolveTestGenerationSource(String email, AiTestCaseGeneratorRequest request) {
+        if (request.apiRequestId() == null) {
+            if (!StringUtils.hasText(request.endpointUrl()) || request.endpointMethod() == null) {
+                throw new IllegalArgumentException("Provide either apiRequestId or both endpointUrl and endpointMethod for AI test generation.");
+            }
+            return new TestGenerationSource(
+                request.endpointUrl().trim(),
+                request.endpointMethod(),
+                request.requestBodyTemplate(),
+                "{}",
+                null
+            );
+        }
+
+        User user = getUserByEmail(email);
+        ApiRequest apiRequest = getOwnedRequest(user.getId(), request.apiRequestId());
+        ApiResponse latest = apiResponseRepository.findTopByApiRequestIdAndApiRequestUserIdOrderByExecutedAtDesc(apiRequest.getId(), user.getId())
+            .orElse(null);
+
+        return new TestGenerationSource(
+            apiRequest.getUrl(),
+            apiRequest.getHttpMethod(),
+            apiRequest.getRequestBody(),
+            String.valueOf(apiRequest.getHeaders()),
+            latest
+        );
+    }
+
+    private ParsedGeneration parseOrRetryGeneratedCases(String modelResponse) {
+        List<AiGeneratedTestCase> generated = parseGeneratedTestCasesFromJson(modelResponse);
+        if (!generated.isEmpty()) {
+            return new ParsedGeneration(generated, modelResponse);
+        }
+
+        String retryPrompt = "Reformat the following content into ONLY valid JSON with key testCases and required fields."
+            + " Keep endpoint specificity and do not add markdown:\n" + modelResponse;
+        String retryResponse = aiClient.generate(retryPrompt);
+        generated = parseGeneratedTestCasesFromJson(retryResponse);
+        return new ParsedGeneration(generated, modelResponse + "\n\nRETRY_RESPONSE:\n" + retryResponse);
     }
 
     @Cacheable(value = "aiChat", key = "#email + ':' + #request.apiRequestId + ':' + #request.message")
@@ -204,7 +230,7 @@ public class AiService {
                                                    String headers,
                                                    String requestBodyTemplate,
                                                    ApiResponse latest,
-                               AiTestCaseGeneratorRequest request) {
+                                                   AiTestCaseGeneratorRequest request) {
         return "Endpoint details:\n"
                 + "URL: " + endpointUrl + "\n"
                 + "Method: " + endpointMethod + "\n"
@@ -229,81 +255,63 @@ public class AiService {
                 + "Create tests tightly aligned with this endpoint and its body fields/params.";
     }
 
-        private List<AiGeneratedTestCase> applyKeywordAssertionPolicy(List<AiGeneratedTestCase> generated,
-                                       AiTestCaseGeneratorRequest request) {
+    private List<AiGeneratedTestCase> applyKeywordAssertionPolicy(List<AiGeneratedTestCase> generated,
+                                                                  AiTestCaseGeneratorRequest request) {
         if (generated == null || generated.isEmpty()) {
             return List.of();
         }
 
         boolean enforce = Boolean.TRUE.equals(request.enforceKeywordAssertion());
         if (!enforce) {
-            return generated.stream()
-                .map(item -> new AiGeneratedTestCase(
-                    item.name(),
-                    item.description(),
-                    item.expectedStatusCode(),
-                    item.maxResponseTimeMs(),
-                    null,
-                    item.requiredResponseTokens(),
-                    item.forbiddenResponseTokens(),
-                    item.requiredJsonPaths(),
-                    item.expectedJsonPathValues(),
-                    item.forbiddenJsonPathValues(),
-                    item.category()
-                ))
-                .toList();
+            return stripExpectedKeyword(generated);
         }
 
         List<String> allowedKeywords = Arrays.stream(nullSafe(request.stableResponseKeywords()).split(","))
             .map(String::trim)
             .filter(StringUtils::hasText)
             .map(String::toLowerCase)
-            .collect(Collectors.toList());
+            .toList();
 
         if (allowedKeywords.isEmpty()) {
-            return generated.stream()
-                .map(item -> new AiGeneratedTestCase(
-                    item.name(),
-                    item.description(),
-                    item.expectedStatusCode(),
-                    item.maxResponseTimeMs(),
-                    null,
-                    item.requiredResponseTokens(),
-                    item.forbiddenResponseTokens(),
-                    item.requiredJsonPaths(),
-                    item.expectedJsonPathValues(),
-                    item.forbiddenJsonPathValues(),
-                    item.category()
-                ))
-                .toList();
+            return stripExpectedKeyword(generated);
         }
 
         return generated.stream()
             .map(item -> {
                 String keyword = item.expectedKeyword();
                 if (!StringUtils.hasText(keyword)) {
-                return item;
+                    return item;
                 }
                 String normalized = keyword.trim().toLowerCase(Locale.ROOT);
                 if (allowedKeywords.stream().anyMatch(allowed -> allowed.equals(normalized))) {
-                return item;
+                    return item;
                 }
-                return new AiGeneratedTestCase(
-                    item.name(),
-                    item.description(),
-                    item.expectedStatusCode(),
-                    item.maxResponseTimeMs(),
-                    null,
-                    item.requiredResponseTokens(),
-                    item.forbiddenResponseTokens(),
-                    item.requiredJsonPaths(),
-                    item.expectedJsonPathValues(),
-                    item.forbiddenJsonPathValues(),
-                    item.category()
-                );
+                return withoutExpectedKeyword(item);
             })
             .toList();
-        }
+    }
+
+    private List<AiGeneratedTestCase> stripExpectedKeyword(List<AiGeneratedTestCase> generated) {
+        return generated.stream()
+            .map(this::withoutExpectedKeyword)
+            .toList();
+    }
+
+    private AiGeneratedTestCase withoutExpectedKeyword(AiGeneratedTestCase item) {
+        return new AiGeneratedTestCase(
+            item.name(),
+            item.description(),
+            item.expectedStatusCode(),
+            item.maxResponseTimeMs(),
+            null,
+            item.requiredResponseTokens(),
+            item.forbiddenResponseTokens(),
+            item.requiredJsonPaths(),
+            item.expectedJsonPathValues(),
+            item.forbiddenJsonPathValues(),
+            item.category()
+        );
+    }
 
     private List<AiGeneratedTestCase> parseGeneratedTestCasesFromJson(String raw) {
         if (!StringUtils.hasText(raw)) {
@@ -340,7 +348,7 @@ public class AiService {
                 if (maxResponseMs <= 0 || maxResponseMs > 60000) {
                     continue;
                 }
-                if (!List.of("SUCCESS", "FAILURE", "EDGE").contains(category)) {
+                if (!VALID_TEST_CASE_CATEGORIES.contains(category)) {
                     continue;
                 }
 
@@ -529,9 +537,9 @@ public class AiService {
             }
 
             return Map.of(
-                    "rootCause", StringUtils.hasText(rootCause) ? rootCause : "Unable to determine exact root cause.",
-                    "fixSuggestion", StringUtils.hasText(fixSuggestion) ? fixSuggestion : "Validate endpoint, payload, auth, and upstream dependency state.",
-                    "optimizationRecommendation", StringUtils.hasText(optimizationRecommendation) ? optimizationRecommendation : "Use tighter timeouts, retries, and structured logging for diagnostics."
+                    "rootCause", StringUtils.hasText(rootCause) ? rootCause : DEFAULT_ROOT_CAUSE,
+                    "fixSuggestion", StringUtils.hasText(fixSuggestion) ? fixSuggestion : DEFAULT_FIX_SUGGESTION,
+                    "optimizationRecommendation", StringUtils.hasText(optimizationRecommendation) ? optimizationRecommendation : DEFAULT_OPTIMIZATION
             );
         } catch (Exception ignored) {
             return null;
@@ -540,6 +548,17 @@ public class AiService {
 
     private String nullSafe(String value) {
         return value == null ? "" : value;
+    }
+
+    private record TestGenerationSource(String endpointUrl,
+                                        HttpMethodType endpointMethod,
+                                        String requestBodyTemplate,
+                                        String headers,
+                                        ApiResponse latest) {
+    }
+
+    private record ParsedGeneration(List<AiGeneratedTestCase> generatedCases,
+                                    String rawModelResponse) {
     }
 }
 

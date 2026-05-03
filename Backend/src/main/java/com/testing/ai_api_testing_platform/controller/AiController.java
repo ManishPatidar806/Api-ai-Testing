@@ -6,7 +6,6 @@ import com.testing.ai_api_testing_platform.dto.AiErrorAnalysisRequest;
 import com.testing.ai_api_testing_platform.dto.AiErrorAnalysisResponse;
 import com.testing.ai_api_testing_platform.dto.AiJobStatusResponse;
 import com.testing.ai_api_testing_platform.dto.AiTestCaseGeneratorRequest;
-import com.testing.ai_api_testing_platform.dto.AiTestCaseGeneratorResponse;
 import com.testing.ai_api_testing_platform.exception.ResourceNotFoundException;
 import com.testing.ai_api_testing_platform.service.AiAsyncJobService;
 import com.testing.ai_api_testing_platform.service.AiService;
@@ -36,45 +35,44 @@ public class AiController {
     @PostMapping("/error-analyzer")
     public AiErrorAnalysisResponse analyzeError(Authentication authentication,
                                                 @Valid @RequestBody AiErrorAnalysisRequest request) {
-        return aiService.analyzeError(authentication.getName(), request);
-    }
-
-    @PostMapping("/test-case-generator")
-    public AiTestCaseGeneratorResponse generateTestCases(Authentication authentication,
-                                                         @Valid @RequestBody AiTestCaseGeneratorRequest request) {
-        return aiService.generateTestCases(authentication.getName(), request);
+        return aiService.analyzeError(currentUser(authentication), request);
     }
 
     @PostMapping("/chat")
     public AiChatResponse chat(Authentication authentication, @Valid @RequestBody AiChatRequest request) {
-        return aiService.chat(authentication.getName(), request);
+        return aiService.chat(currentUser(authentication), request);
     }
 
     @PostMapping("/jobs/error-analyzer")
     public ResponseEntity<AiJobStatusResponse> submitErrorAnalyzerJob(Authentication authentication,
                                                                        @Valid @RequestBody AiErrorAnalysisRequest request) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(aiAsyncJobService.submitErrorAnalysis(authentication.getName(), request));
+        return accepted(aiAsyncJobService.submitErrorAnalysis(currentUser(authentication), request));
     }
 
     @PostMapping("/jobs/test-case-generator")
     public ResponseEntity<AiJobStatusResponse> submitTestGeneratorJob(Authentication authentication,
                                                                        @Valid @RequestBody AiTestCaseGeneratorRequest request) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(aiAsyncJobService.submitTestGeneration(authentication.getName(), request));
+        return accepted(aiAsyncJobService.submitTestGeneration(currentUser(authentication), request));
     }
 
     @PostMapping("/jobs/chat")
     public ResponseEntity<AiJobStatusResponse> submitChatJob(Authentication authentication,
                                                              @Valid @RequestBody AiChatRequest request) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(aiAsyncJobService.submitChat(authentication.getName(), request));
+        return accepted(aiAsyncJobService.submitChat(currentUser(authentication), request));
     }
 
     @GetMapping("/jobs/{jobId}")
     public AiJobStatusResponse getJobStatus(Authentication authentication, @PathVariable String jobId) {
-        return aiAsyncJobService.getJob(jobId, authentication.getName())
+        return aiAsyncJobService.getJob(jobId, currentUser(authentication))
                 .orElseThrow(() -> new ResourceNotFoundException("AI job not found"));
+    }
+
+    private String currentUser(Authentication authentication) {
+        return authentication.getName();
+    }
+
+    private ResponseEntity<AiJobStatusResponse> accepted(AiJobStatusResponse body) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(body);
     }
 }
 

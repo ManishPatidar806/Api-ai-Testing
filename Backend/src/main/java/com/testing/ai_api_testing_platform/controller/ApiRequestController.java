@@ -33,41 +33,45 @@ public class ApiRequestController {
     @PostMapping
     public ResponseEntity<ApiRequestResponse> create(Authentication authentication,
                                                      @Valid @RequestBody ApiRequestCreateUpdateRequest request) {
-        ApiRequestResponse response = apiRequestService.create(authentication.getName(), request);
+        ApiRequestResponse response = apiRequestService.create(currentUser(authentication), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public List<ApiRequestResponse> listMine(Authentication authentication) {
-        return apiRequestService.listMine(authentication.getName());
+        return apiRequestService.listMine(currentUser(authentication));
     }
 
     @GetMapping("/{requestId}")
     public ApiRequestResponse getMine(Authentication authentication, @PathVariable Long requestId) {
-        return apiRequestService.getMine(authentication.getName(), requestId);
+        return apiRequestService.getMine(currentUser(authentication), requestId);
     }
 
     @PutMapping("/{requestId}")
     public ApiRequestResponse updateMine(Authentication authentication,
                                          @PathVariable Long requestId,
                                          @Valid @RequestBody ApiRequestCreateUpdateRequest request) {
-        return apiRequestService.updateMine(authentication.getName(), requestId, request);
+        return apiRequestService.updateMine(currentUser(authentication), requestId, request);
     }
 
     @DeleteMapping("/{requestId}")
     public ResponseEntity<Void> deleteMine(Authentication authentication, @PathVariable Long requestId) {
-        apiRequestService.deleteMine(authentication.getName(), requestId);
+        apiRequestService.deleteMine(currentUser(authentication), requestId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{requestId}/execute")
     public ApiRequestExecuteResponse executeMine(Authentication authentication, @PathVariable Long requestId) {
-        return apiRequestService.executeMine(authentication.getName(), requestId);
+        return apiRequestService.executeMine(currentUser(authentication), requestId);
     }
 
     @GetMapping("/{requestId}/responses")
     public List<ApiResponseResponse> listRecentResponses(Authentication authentication, @PathVariable Long requestId) {
-        return apiRequestService.listRecentResponses(authentication.getName(), requestId);
+        return apiRequestService.listRecentResponses(currentUser(authentication), requestId);
+    }
+
+    private String currentUser(Authentication authentication) {
+        return authentication.getName();
     }
 }
 

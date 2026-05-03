@@ -35,35 +35,20 @@ public class TestCaseController {
     public ResponseEntity<TestCaseResponse> create(Authentication authentication,
                                                    @PathVariable Long apiRequestId,
                                                    @Valid @RequestBody TestCaseCreateUpdateRequest request) {
-        TestCaseResponse response = testCaseService.create(authentication.getName(), apiRequestId, request);
+        TestCaseResponse response = testCaseService.create(currentUser(authentication), apiRequestId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/test-cases")
     public List<TestCaseResponse> list(Authentication authentication, @PathVariable Long apiRequestId) {
-        return testCaseService.list(authentication.getName(), apiRequestId);
-    }
-
-    @GetMapping("/test-cases/{testCaseId}")
-    public TestCaseResponse get(Authentication authentication,
-                                @PathVariable Long apiRequestId,
-                                @PathVariable Long testCaseId) {
-        return testCaseService.get(authentication.getName(), apiRequestId, testCaseId);
-    }
-
-    @PutMapping("/test-cases/{testCaseId}")
-    public TestCaseResponse update(Authentication authentication,
-                                   @PathVariable Long apiRequestId,
-                                   @PathVariable Long testCaseId,
-                                   @Valid @RequestBody TestCaseCreateUpdateRequest request) {
-        return testCaseService.update(authentication.getName(), apiRequestId, testCaseId, request);
+        return testCaseService.list(currentUser(authentication), apiRequestId);
     }
 
     @DeleteMapping("/test-cases/{testCaseId}")
     public ResponseEntity<Void> delete(Authentication authentication,
                                        @PathVariable Long apiRequestId,
                                        @PathVariable Long testCaseId) {
-        testCaseService.delete(authentication.getName(), apiRequestId, testCaseId);
+        testCaseService.delete(currentUser(authentication), apiRequestId, testCaseId);
         return ResponseEntity.noContent().build();
     }
 
@@ -71,17 +56,21 @@ public class TestCaseController {
     public RunSingleTestResponse runSingle(Authentication authentication,
                                            @PathVariable Long apiRequestId,
                                            @PathVariable Long testCaseId) {
-        return testCaseService.runSingle(authentication.getName(), apiRequestId, testCaseId);
+        return testCaseService.runSingle(currentUser(authentication), apiRequestId, testCaseId);
     }
 
     @PostMapping("/test-cases/run-all")
     public RunAllTestsResponse runAll(Authentication authentication, @PathVariable Long apiRequestId) {
-        return testCaseService.runAll(authentication.getName(), apiRequestId);
+        return testCaseService.runAll(currentUser(authentication), apiRequestId);
     }
 
     @GetMapping("/test-results")
     public List<TestResultResponse> listRecentResults(Authentication authentication, @PathVariable Long apiRequestId) {
-        return testCaseService.listRecentResults(authentication.getName(), apiRequestId);
+        return testCaseService.listRecentResults(currentUser(authentication), apiRequestId);
+    }
+
+    private String currentUser(Authentication authentication) {
+        return authentication.getName();
     }
 }
 

@@ -30,7 +30,7 @@ const REQUEST_TABS = [
   { key: 'auth', label: 'Auth' },
 ];
 
-function RequestBuilder({ request, setRequest, onSend, sending, disabled = false }) {
+function RequestBuilder({ request, setRequest, onSend, sending, sendingNote = '', disabled = false }) {
   const [activeTab, setActiveTab] = useState('params');
 
   const updateRequestField = (field, value) => {
@@ -481,6 +481,8 @@ function RequestBuilder({ request, setRequest, onSend, sending, disabled = false
             {sending ? 'Sending...' : 'Send Request'}
           </Button>
         </div>
+
+        {sendingNote ? <p className="text-xs text-amber-700">{sendingNote}</p> : null}
       </div>
     </Card>
   );

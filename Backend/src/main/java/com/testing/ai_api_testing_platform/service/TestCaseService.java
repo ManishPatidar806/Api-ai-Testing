@@ -9,7 +9,6 @@ import com.testing.ai_api_testing_platform.domain.entity.TestResult;
 import com.testing.ai_api_testing_platform.domain.entity.User;
 import com.testing.ai_api_testing_platform.domain.enums.TestCaseMode;
 import com.testing.ai_api_testing_platform.domain.enums.TestExecutionStatus;
-import com.testing.ai_api_testing_platform.dto.ApiResponseResponse;
 import com.testing.ai_api_testing_platform.dto.RunAllTestsResponse;
 import com.testing.ai_api_testing_platform.dto.RunSingleTestResponse;
 import com.testing.ai_api_testing_platform.dto.TestCaseCreateUpdateRequest;
@@ -36,11 +35,16 @@ import java.util.stream.Collectors;
 @Service
 public class TestCaseService {
 
+    private static final int DEFAULT_BRUTE_FORCE_ATTEMPTS = 10;
+    private static final int MAX_BRUTE_FORCE_ATTEMPTS = 500;
+    private static final int DEFAULT_BLOCK_STATUS = 429;
+
     private final UserRepository userRepository;
     private final ApiRequestRepository apiRequestRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestResultRepository testResultRepository;
     private final ApiExecutionService apiExecutionService;
+    private final ApiResponseMapper apiResponseMapper;
     private final ObjectMapper objectMapper;
 
     public TestCaseService(UserRepository userRepository,
@@ -48,12 +52,14 @@ public class TestCaseService {
                            TestCaseRepository testCaseRepository,
                            TestResultRepository testResultRepository,
                            ApiExecutionService apiExecutionService,
+                           ApiResponseMapper apiResponseMapper,
                            ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.apiRequestRepository = apiRequestRepository;
         this.testCaseRepository = testCaseRepository;
         this.testResultRepository = testResultRepository;
         this.apiExecutionService = apiExecutionService;
+        this.apiResponseMapper = apiResponseMapper;
         this.objectMapper = objectMapper;
     }
 
@@ -80,24 +86,6 @@ public class TestCaseService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
-    public TestCaseResponse get(String email, Long apiRequestId, Long testCaseId) {
-        User user = getUserByEmail(email);
-        TestCase testCase = getOwnedTestCase(user.getId(), apiRequestId, testCaseId);
-        return toTestCaseResponse(testCase);
-    }
-
-    @Transactional
-    public TestCaseResponse update(String email,
-                                   Long apiRequestId,
-                                   Long testCaseId,
-                                   TestCaseCreateUpdateRequest request) {
-        User user = getUserByEmail(email);
-        TestCase testCase = getOwnedTestCase(user.getId(), apiRequestId, testCaseId);
-        applyTestCaseUpdate(testCase, request, false);
-        return toTestCaseResponse(testCaseRepository.save(testCase));
-    }
-
     @Transactional
     public void delete(String email, Long apiRequestId, Long testCaseId) {
         User user = getUserByEmail(email);
@@ -117,7 +105,7 @@ public class TestCaseService {
 
         return new RunSingleTestResponse(
                 toTestCaseResponse(testCase),
-            apiResponse == null ? null : toApiResponseResponse(apiResponse),
+                apiResponseMapper.toResponse(apiResponse),
                 toTestResultResponse(testResult)
         );
     }
@@ -144,12 +132,7 @@ public class TestCaseService {
         ApiResponse lastApiResponse = null;
 
         for (TestCase testCase : activeCases) {
-            TestResult result;
-            if (testCase.getTestMode() == TestCaseMode.BRUTE_FORCE) {
-                result = runBruteForceAndPersist(user.getId(), apiRequest, testCase);
-            } else {
-                result = evaluateFunctionalAndPersist(user.getId(), apiRequest, testCase);
-            }
+            TestResult result = runAndPersistByMode(user.getId(), apiRequest, testCase);
 
             lastApiResponse = result.getApiResponse();
             if (result.getStatus() == TestExecutionStatus.PASS) {
@@ -161,7 +144,7 @@ public class TestCaseService {
         int failed = activeCases.size() - passed;
         return new RunAllTestsResponse(
                 apiRequestId,
-            lastApiResponse == null ? null : toApiResponseResponse(lastApiResponse),
+                apiResponseMapper.toResponse(lastApiResponse),
                 activeCases.size(),
                 passed,
                 failed,
@@ -183,20 +166,20 @@ public class TestCaseService {
     }
 
     private TestResult executeAndEvaluate(Long userId, ApiRequest apiRequest, TestCase testCase) {
+        return runAndPersistByMode(userId, apiRequest, testCase);
+    }
+
+    private TestResult runAndPersistByMode(Long userId, ApiRequest apiRequest, TestCase testCase) {
         if (testCase.getTestMode() == TestCaseMode.BRUTE_FORCE) {
             return runBruteForceAndPersist(userId, apiRequest, testCase);
         }
-
         return evaluateFunctionalAndPersist(userId, apiRequest, testCase);
     }
 
     private TestResult evaluateFunctionalAndPersist(Long userId, ApiRequest apiRequest, TestCase testCase) {
         ExecutionContext context = prepareExecutionContext(userId, apiRequest, testCase);
         if (!context.ready()) {
-            ApiResponse setupResponse = context.setupResponse() != null
-                    ? context.setupResponse()
-                    : apiExecutionService.executeAndPersist(apiRequest);
-            return saveTestResult(testCase, setupResponse, List.of(context.errorMessage()), null, false);
+            return buildSetupFailureResult(apiRequest, testCase, context);
         }
 
         ApiResponse apiResponse = apiExecutionService.executeAndPersist(
@@ -214,17 +197,14 @@ public class TestCaseService {
 
     private TestResult runBruteForceAndPersist(Long userId, ApiRequest apiRequest, TestCase testCase) {
         int attempts = normalizeAttempts(testCase.getBruteForceAttempts());
-        int expectedBlockStatus = testCase.getBruteForceBlockStatusCode() == null ? 429 : testCase.getBruteForceBlockStatusCode();
+        int expectedBlockStatus = testCase.getBruteForceBlockStatusCode() == null ? DEFAULT_BLOCK_STATUS : testCase.getBruteForceBlockStatusCode();
         int expectedBlockByAttempt = testCase.getBruteForceStartBlockingAfter() == null ? attempts : testCase.getBruteForceStartBlockingAfter();
         expectedBlockByAttempt = Math.max(1, Math.min(expectedBlockByAttempt, attempts));
         long delayMs = testCase.getBruteForceDelayMs() == null ? 0L : Math.max(0L, testCase.getBruteForceDelayMs());
 
         ExecutionContext context = prepareExecutionContext(userId, apiRequest, testCase);
         if (!context.ready()) {
-            ApiResponse setupResponse = context.setupResponse() != null
-                    ? context.setupResponse()
-                    : apiExecutionService.executeAndPersist(apiRequest);
-            return saveTestResult(testCase, setupResponse, List.of(context.errorMessage()), null, false);
+            return buildSetupFailureResult(apiRequest, testCase, context);
         }
 
         ApiResponse lastResponse = null;
@@ -454,9 +434,16 @@ public class TestCaseService {
 
     private int normalizeAttempts(Integer attempts) {
         if (attempts == null) {
-            return 10;
+            return DEFAULT_BRUTE_FORCE_ATTEMPTS;
         }
-        return Math.max(1, Math.min(attempts, 500));
+        return Math.max(1, Math.min(attempts, MAX_BRUTE_FORCE_ATTEMPTS));
+    }
+
+    private TestResult buildSetupFailureResult(ApiRequest apiRequest, TestCase testCase, ExecutionContext context) {
+        ApiResponse setupResponse = context.setupResponse() != null
+            ? context.setupResponse()
+            : apiExecutionService.executeAndPersist(apiRequest);
+        return saveTestResult(testCase, setupResponse, List.of(context.errorMessage()), null, false);
     }
 
     private ExecutionContext prepareExecutionContext(Long userId, ApiRequest apiRequest, TestCase testCase) {
@@ -626,19 +613,6 @@ public class TestCaseService {
                 entity.getActualResponseTimeMs(),
                 entity.getKeywordMatched(),
                 entity.getAssertionMessage(),
-                entity.getExecutedAt()
-        );
-    }
-
-    private ApiResponseResponse toApiResponseResponse(ApiResponse entity) {
-        return new ApiResponseResponse(
-                entity.getId(),
-                entity.getStatusCode(),
-                entity.getResponseBody(),
-            entity.getResponseHeaders(),
-                entity.getResponseTimeMs(),
-                entity.isSuccess(),
-                entity.getErrorMessage(),
                 entity.getExecutedAt()
         );
     }

@@ -57,7 +57,7 @@ function DashboardPage() {
         setSummary((prev) => ({ ...prev, totalRequests: requests.length }));
         setLastSyncedAt(new Date().toISOString());
       } catch (loadError) {
-        setError(loadError.message || 'Failed to load dashboard data');
+        setError(loadError.message || 'Failed to load performance data');
       } finally {
         setLoading(false);
       }
@@ -141,7 +141,7 @@ function DashboardPage() {
   }, [selectedApiRequestId, apiRequests.length]);
 
   if (loading && !apiRequests.length) {
-    return <LoadingState text="Loading dashboard..." />;
+    return <LoadingState text="Loading performance insights..." />;
   }
 
   if (!apiRequests.length) {
@@ -149,10 +149,10 @@ function DashboardPage() {
       <div>
         <EmptyState
           title="No API requests found"
-          description="Create and run a request first to see dashboard insights."
+          description="Create and run a request first to see performance insights."
         />
         <div className="mt-3 flex justify-center">
-          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/', waitForFirstRequest: true } })}>Go to Request Builder</Button>
+          <Button onClick={() => navigate('/workspace', { state: { returnTo: '/performance', waitForFirstRequest: true } })}>Go to Request Builder</Button>
         </div>
       </div>
     );
@@ -161,12 +161,12 @@ function DashboardPage() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-xl font-semibold text-slate-900">Dashboard</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Performance</h2>
         <p className="mt-1 text-sm text-slate-500">A quick summary of your requests, test results, and response speed.</p>
         <p className="mt-1 text-xs text-slate-500">Last synced: {formatSyncedAt(lastSyncedAt)}</p>
       </section>
 
-      <Card title="Select Request" subtitle="Show dashboard numbers for one request or all requests">
+      <Card title="Select Request" subtitle="Show performance numbers for one request or all requests">
         <p className="mb-2 text-xs text-slate-500">
           Tip: choose All Requests for the full picture, or select one request for details.
         </p>

@@ -29,9 +29,4 @@ export const metricsService = {
       apiRequestId: response.data?.apiRequestId ?? Number(apiRequestId),
     };
   },
-
-  async getTrendSummary(apiRequestId) {
-    const response = await apiClient.get(`/api-requests/${apiRequestId}/performance/trend-summary`);
-    return response.data;
-  },
 };

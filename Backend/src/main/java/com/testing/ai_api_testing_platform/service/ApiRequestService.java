@@ -25,15 +25,18 @@ public class ApiRequestService {
     private final ApiResponseRepository apiResponseRepository;
     private final UserRepository userRepository;
     private final ApiExecutionService apiExecutionService;
+    private final ApiResponseMapper apiResponseMapper;
 
     public ApiRequestService(ApiRequestRepository apiRequestRepository,
                              ApiResponseRepository apiResponseRepository,
                              UserRepository userRepository,
-                             ApiExecutionService apiExecutionService) {
+                             ApiExecutionService apiExecutionService,
+                             ApiResponseMapper apiResponseMapper) {
         this.apiRequestRepository = apiRequestRepository;
         this.apiResponseRepository = apiResponseRepository;
         this.userRepository = userRepository;
         this.apiExecutionService = apiExecutionService;
+        this.apiResponseMapper = apiResponseMapper;
     }
 
     @Transactional
@@ -85,7 +88,7 @@ public class ApiRequestService {
 
         return new ApiRequestExecuteResponse(
                 toApiRequestResponse(apiRequest),
-                toApiResponseResponse(savedResponse)
+                apiResponseMapper.toResponse(savedResponse)
         );
     }
 
@@ -96,7 +99,7 @@ public class ApiRequestService {
 
         return apiResponseRepository.findTop20ByApiRequestIdAndApiRequestUserIdOrderByExecutedAtDesc(requestId, user.getId())
                 .stream()
-                .map(this::toApiResponseResponse)
+                .map(apiResponseMapper::toResponse)
                 .toList();
     }
 
@@ -137,18 +140,6 @@ public class ApiRequestService {
         );
     }
 
-    private ApiResponseResponse toApiResponseResponse(ApiResponse entity) {
-        return new ApiResponseResponse(
-                entity.getId(),
-                entity.getStatusCode(),
-                entity.getResponseBody(),
-            entity.getResponseHeaders(),
-                entity.getResponseTimeMs(),
-                entity.isSuccess(),
-                entity.getErrorMessage(),
-                entity.getExecutedAt()
-        );
-    }
 }
 
 

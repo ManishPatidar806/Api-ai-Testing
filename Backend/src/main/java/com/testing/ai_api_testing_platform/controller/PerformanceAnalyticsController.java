@@ -2,7 +2,6 @@ package com.testing.ai_api_testing_platform.controller;
 
 import com.testing.ai_api_testing_platform.dto.AverageResponseTimeResponse;
 import com.testing.ai_api_testing_platform.dto.FailureRateResponse;
-import com.testing.ai_api_testing_platform.dto.PerformanceTrendSummaryResponse;
 import com.testing.ai_api_testing_platform.dto.SuccessRateResponse;
 import com.testing.ai_api_testing_platform.service.PerformanceAnalyticsService;
 import org.springframework.security.core.Authentication;
@@ -34,11 +33,6 @@ public class PerformanceAnalyticsController {
     @GetMapping("/failure-rate")
     public FailureRateResponse failureRate(Authentication authentication, @PathVariable Long apiRequestId) {
         return performanceAnalyticsService.getFailureRate(authentication.getName(), apiRequestId);
-    }
-
-    @GetMapping("/trend-summary")
-    public PerformanceTrendSummaryResponse trendSummary(Authentication authentication, @PathVariable Long apiRequestId) {
-        return performanceAnalyticsService.getTrendSummary(authentication.getName(), apiRequestId);
     }
 }
 
