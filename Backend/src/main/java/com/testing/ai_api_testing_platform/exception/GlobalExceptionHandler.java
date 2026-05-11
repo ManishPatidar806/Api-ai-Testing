@@ -1,6 +1,6 @@
 package com.testing.ai_api_testing_platform.exception;
 
-import com.testing.ai_api_testing_platform.dto.ApiErrorResponse;
+import com.testing.ai_api_testing_platform.dto.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;

@@ -1,8 +1,8 @@
 package com.testing.ai_api_testing_platform.controller;
 
-import com.testing.ai_api_testing_platform.dto.AverageResponseTimeResponse;
-import com.testing.ai_api_testing_platform.dto.FailureRateResponse;
-import com.testing.ai_api_testing_platform.dto.SuccessRateResponse;
+import com.testing.ai_api_testing_platform.dto.response.AverageResponseTimeResponse;
+import com.testing.ai_api_testing_platform.dto.response.FailureRateResponse;
+import com.testing.ai_api_testing_platform.dto.response.SuccessRateResponse;
 import com.testing.ai_api_testing_platform.service.PerformanceAnalyticsService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;

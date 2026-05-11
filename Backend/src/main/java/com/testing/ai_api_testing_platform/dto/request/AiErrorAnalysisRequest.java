@@ -1,4 +1,4 @@
-package com.testing.ai_api_testing_platform.dto;
+package com.testing.ai_api_testing_platform.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 

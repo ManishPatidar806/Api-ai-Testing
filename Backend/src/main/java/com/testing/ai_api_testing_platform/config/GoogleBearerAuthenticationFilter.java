@@ -1,8 +1,8 @@
 package com.testing.ai_api_testing_platform.config;
 
 import com.testing.ai_api_testing_platform.domain.entity.User;
-import com.testing.ai_api_testing_platform.service.AuthService;
-import com.testing.ai_api_testing_platform.service.GoogleTokenVerifierService;
+import com.testing.ai_api_testing_platform.service.AuthServiceImpl;
+import com.testing.ai_api_testing_platform.service.GoogleTokenVerifierServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,13 +20,13 @@ import java.util.List;
 @Component
 public class GoogleBearerAuthenticationFilter extends OncePerRequestFilter {
 
-    private final GoogleTokenVerifierService googleTokenVerifierService;
-    private final AuthService authService;
+    private final GoogleTokenVerifierServiceImpl googleTokenVerifierServiceImpl;
+    private final AuthServiceImpl authServiceImpl;
 
-    public GoogleBearerAuthenticationFilter(GoogleTokenVerifierService googleTokenVerifierService,
-                                            AuthService authService) {
-        this.googleTokenVerifierService = googleTokenVerifierService;
-        this.authService = authService;
+    public GoogleBearerAuthenticationFilter(GoogleTokenVerifierServiceImpl googleTokenVerifierServiceImpl,
+                                            AuthServiceImpl authServiceImpl) {
+        this.googleTokenVerifierServiceImpl = googleTokenVerifierServiceImpl;
+        this.authServiceImpl = authServiceImpl;
     }
 
     @Override
@@ -47,8 +47,8 @@ public class GoogleBearerAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            GoogleTokenVerifierService.GoogleTokenPayload payload = googleTokenVerifierService.verifyIdToken(idToken);
-            User user = authService.upsertFromGooglePayload(payload);
+            GoogleTokenVerifierServiceImpl.GoogleTokenPayload payload = googleTokenVerifierServiceImpl.verifyIdToken(idToken);
+            User user = authServiceImpl.upsertFromGooglePayload(payload);
 
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                     user.getEmail(),

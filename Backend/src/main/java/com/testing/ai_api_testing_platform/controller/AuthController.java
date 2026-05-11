@@ -1,6 +1,6 @@
 package com.testing.ai_api_testing_platform.controller;
 
-import com.testing.ai_api_testing_platform.dto.AuthResponse;
+import com.testing.ai_api_testing_platform.dto.response.AuthResponse;
 import com.testing.ai_api_testing_platform.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

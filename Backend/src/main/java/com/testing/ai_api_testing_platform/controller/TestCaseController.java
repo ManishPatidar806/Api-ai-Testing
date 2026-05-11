@@ -1,10 +1,10 @@
 package com.testing.ai_api_testing_platform.controller;
 
-import com.testing.ai_api_testing_platform.dto.RunAllTestsResponse;
-import com.testing.ai_api_testing_platform.dto.RunSingleTestResponse;
-import com.testing.ai_api_testing_platform.dto.TestCaseCreateUpdateRequest;
-import com.testing.ai_api_testing_platform.dto.TestCaseResponse;
-import com.testing.ai_api_testing_platform.dto.TestResultResponse;
+import com.testing.ai_api_testing_platform.dto.response.RunAllTestsResponse;
+import com.testing.ai_api_testing_platform.dto.response.RunSingleTestResponse;
+import com.testing.ai_api_testing_platform.dto.request.TestCaseCreateUpdateRequest;
+import com.testing.ai_api_testing_platform.dto.response.TestCaseResponse;
+import com.testing.ai_api_testing_platform.dto.response.TestResultResponse;
 import com.testing.ai_api_testing_platform.service.TestCaseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

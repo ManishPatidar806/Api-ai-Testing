@@ -1,7 +1,7 @@
 package com.testing.ai_api_testing_platform.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.testing.ai_api_testing_platform.dto.ApiErrorResponse;
+import com.testing.ai_api_testing_platform.dto.response.ApiErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

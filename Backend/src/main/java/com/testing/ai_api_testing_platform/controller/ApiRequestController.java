@@ -1,9 +1,9 @@
 package com.testing.ai_api_testing_platform.controller;
 
-import com.testing.ai_api_testing_platform.dto.ApiRequestCreateUpdateRequest;
-import com.testing.ai_api_testing_platform.dto.ApiRequestExecuteResponse;
-import com.testing.ai_api_testing_platform.dto.ApiRequestResponse;
-import com.testing.ai_api_testing_platform.dto.ApiResponseResponse;
+import com.testing.ai_api_testing_platform.dto.request.ApiRequestCreateUpdateRequest;
+import com.testing.ai_api_testing_platform.dto.response.ApiRequestExecuteResponse;
+import com.testing.ai_api_testing_platform.dto.response.ApiRequestResponse;
+import com.testing.ai_api_testing_platform.dto.response.ApiResponseResponse;
 import com.testing.ai_api_testing_platform.service.ApiRequestService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

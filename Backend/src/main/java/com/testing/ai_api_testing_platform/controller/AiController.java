@@ -1,14 +1,16 @@
 package com.testing.ai_api_testing_platform.controller;
 
-import com.testing.ai_api_testing_platform.dto.AiChatRequest;
-import com.testing.ai_api_testing_platform.dto.AiChatResponse;
-import com.testing.ai_api_testing_platform.dto.AiErrorAnalysisRequest;
-import com.testing.ai_api_testing_platform.dto.AiErrorAnalysisResponse;
-import com.testing.ai_api_testing_platform.dto.AiJobStatusResponse;
-import com.testing.ai_api_testing_platform.dto.AiTestCaseGeneratorRequest;
+import com.testing.ai_api_testing_platform.dto.request.AiChatRequest;
+import com.testing.ai_api_testing_platform.dto.response.AiChatResponse;
+import com.testing.ai_api_testing_platform.dto.request.AiErrorAnalysisRequest;
+import com.testing.ai_api_testing_platform.dto.response.AiErrorAnalysisResponse;
+import com.testing.ai_api_testing_platform.dto.response.AiJobStatusResponse;
+import com.testing.ai_api_testing_platform.dto.request.AiTestCaseGeneratorRequest;
 import com.testing.ai_api_testing_platform.exception.ResourceNotFoundException;
 import com.testing.ai_api_testing_platform.service.AiAsyncJobService;
+import com.testing.ai_api_testing_platform.service.AiAsyncJobServiceImpl;
 import com.testing.ai_api_testing_platform.service.AiService;
+import com.testing.ai_api_testing_platform.service.AiServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +29,9 @@ public class AiController {
     private final AiService aiService;
     private final AiAsyncJobService aiAsyncJobService;
 
-    public AiController(AiService aiService, AiAsyncJobService aiAsyncJobService) {
+    public AiController(AiService aiService, AiService aiService, AiAsyncJobServiceImpl aiAsyncJobServiceImpl) {
         this.aiService = aiService;
+
         this.aiAsyncJobService = aiAsyncJobService;
     }
 
