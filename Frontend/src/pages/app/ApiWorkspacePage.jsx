@@ -433,7 +433,12 @@ function ApiWorkspacePage() {
   };
 
   if (loadingRequests) {
-    return <LoadingState text="Backend is starting up on Render" />;
+    return (
+      <LoadingState
+        text="Backend is starting up on Render"
+        hint="This is the first request after login and may take a few minutes to start up."
+      />
+    );
   }
 
   return (
@@ -506,7 +511,6 @@ function ApiWorkspacePage() {
               setRequest={setRequest}
               onSend={onSend}
               sending={sending}
-              sendingNote={sending && isFirstExecutionAttempt ? 'Backend is warming up on Render. Please wait up to 2-3 minutes for the first request.' : ''}
               disabled={sending}
             />
             {response ? (

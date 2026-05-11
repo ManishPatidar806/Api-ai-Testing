@@ -29,7 +29,7 @@ public class AiController {
     private final AiService aiService;
     private final AiAsyncJobService aiAsyncJobService;
 
-    public AiController(AiService aiService, AiService aiService, AiAsyncJobServiceImpl aiAsyncJobServiceImpl) {
+    public AiController(AiService aiService, AiAsyncJobService aiAsyncJobService) {
         this.aiService = aiService;
 
         this.aiAsyncJobService = aiAsyncJobService;
